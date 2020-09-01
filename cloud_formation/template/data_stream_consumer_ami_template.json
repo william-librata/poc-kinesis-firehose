@@ -1,0 +1,87 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create EC2 instance to be used for data stream consumer AMI",
+    "Parameters" : {
+        "IamInstanceProfile" : {
+            "Description" : "IAM profile name to be attached to EC2 instance",
+            "Default" : "AMICreator",
+            "Type" : "String"
+        },
+        "EbsOptimized" : {
+            "Description" : "Boolean to control the optimisation of EBS",
+            "Default" : "True",
+            "Type" : "String"
+        },
+        "ImageId" : {
+            "Description" : "AMI image ID",
+            "Default" : "ami-0c0483bc96aef8b2f",
+            "Type" : "String"
+        },
+        "InstanceType" : {
+            "Description" : "EC2 instance type",
+            "Default" : "t3.micro",
+            "Type" : "String"
+        },
+        "KeyName" : {
+            "Description" : "Public key pair name for logins",
+            "Default" : "20180301-PublicKey",
+            "Type" : "String"
+        }
+    },
+    "Resources" : {
+        "DataStreamConsumerTemplate" : {
+            "Type" : "AWS::EC2::Instance",
+            "Properties" : {
+                "EbsOptimized" : {
+                    "Ref" : "EbsOptimized"
+                },
+                "IamInstanceProfile" : {
+                    "Ref" : "IamInstanceProfile"
+                },
+                "ImageId" : {
+                    "Ref" : "ImageId"
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "KeyName" : {
+                    "Ref" : "KeyName"
+                },
+                "Monitoring" : "False",
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "DataStreamConsumerTemplate"
+                    }
+                ],
+                "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+                    "#!/bin/bash -xe\n",
+                    "sudo apt-get update -y\n",
+                    "sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" upgrade -y\n",
+                    "sudo snap install aws-cli --classic\n",
+                    "sudo apt-get install default-jre -y\n",
+                    "sudo apt-get install python3-setuptools -y\n",
+                    "sudo apt-get install virtualenv -y\n",
+                    "mkdir ~/.aws\n",
+                    "touch ~/.aws/config\n",
+                    "echo \"[profile DataStreamConsumer]\" >> ~/.aws/config\n",
+                    "echo \"region = ap-southeast-2\" >> ~/.aws/config\n",
+                    "echo \"output = json\" >> ~/.aws/config\n",
+                    "sudo git config --global credential.helper '!aws --profile DataStreamConsumer codecommit credential-helper $@'\n",
+                    "sudo git config --global credential.UseHttpPath true\n",
+                    "sudo git clone https://git-codecommit.ap-southeast-2.amazonaws.com/v1/repos/data_stream_consumer /opt/data_stream_consumer\n",
+                    "sudo git clone https://github.com/awslabs/amazon-kinesis-client-python /opt/amazon-kinesis-client-python\n",
+                    "cd /opt/amazon-kinesis-client-python\n",
+                    "sudo python3 setup.py download_jars\n",
+                    "sudo python3 setup.py install\n"
+                ]]}}
+            }
+        }
+    },
+    "Outputs" : {
+        "MachineID" : {
+            "Value":{"Ref": "DataStreamConsumerTemplate"},
+            "Description" : "Newly created machine"
+        }
+    }
+}

@@ -1,0 +1,65 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create kinesis data stream from shards to data store.",
+    "Parameters" : {
+        "RetentionPeriod" : {
+            "Description" : "Data stream retention period in hours.",
+            "Default" : "24",
+            "Type" : "Number"
+        },
+        "TotalShard" : {
+            "Description" : "Data stream total shard",
+            "Default" : "3",
+            "Type" : "Number"
+        },
+    },
+    "Resources" : {
+        "DataStream" : {
+            "Type" : "AWS::Kinesis::Stream",
+            "Properties" : {
+                "Name" : "DataStream",
+                "RetentionPeriodHours" : {
+                    "Ref" : "RetentionPeriod"
+                },
+                "ShardCount" : {
+                    "Ref" : "TotalShard"
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "DataStream"
+                    }
+                ]
+            }
+        },
+        "StreamConsumer1" : {
+            "Type" : "AWS::Kinesis::StreamConsumer",
+            "Properties" : {
+                "ConsumerName" : "StreamConsumer1",
+                "StreamARN" : { "Fn::GetAtt" : [ "DataStream", "Arn" ] }
+            }
+        },
+        "StreamConsumer2" : {
+            "Type" : "AWS::Kinesis::StreamConsumer",
+            "Properties" : {
+                "ConsumerName" : "StreamConsumer2",
+                "StreamARN" : { "Fn::GetAtt" : [ "DataStream", "Arn" ] }
+            }
+        },
+        "StreamConsumer3" : {
+            "Type" : "AWS::Kinesis::StreamConsumer",
+            "Properties" : {
+                "ConsumerName" : "StreamConsumer3",
+                "StreamARN" : { "Fn::GetAtt" : [ "DataStream", "Arn" ] }
+            }
+        }
+    },
+    "Outputs" : {
+        "StreamName" : {
+            "Value" : {
+                "Ref" : "DataStream"
+            },
+            "Description" : "Newly created data stream name."
+        }
+    }
+}

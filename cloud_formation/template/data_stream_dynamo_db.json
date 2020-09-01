@@ -1,0 +1,42 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create kinesis data stream from shards to data store.",
+    "Resources" : {
+        "DataStream" : {
+            "Type" : "AWS::DynamoDB::Table",
+            "Properties" : {
+                "AttributeDefinitions" : [
+                    {
+                        "AttributeName" : "sensor_uuid",
+                        "AttributeType" : "S"
+                    }
+                ],
+                "KeySchema" : [
+                    {
+                        "AttributeName" : "sensor_uuid",
+                        "KeyType" : "HASH"
+                    }
+                ],
+                "TableName" : "DataStream",
+                "ProvisionedThroughput" : {
+                    "ReadCapacityUnits" : "10",
+                    "WriteCapacityUnits" : "10"
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "DataStream"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs" : {
+        "StreamName" : {
+            "Value" : {
+                "Ref" : "DataStream"
+            },
+            "Description" : "Newly created DynamoDB table"
+        }
+    }
+}
